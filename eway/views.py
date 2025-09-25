@@ -8,6 +8,22 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import EWayBill
 from .serializers import EWayBillUploadSerializer, EWayBillDataSerializer
+from django.shortcuts import render
+from datetime import datetime
+from django.http import JsonResponse
+
+
+def current_date_api(request):
+    """
+    Backend-only endpoint to return current date and time in JSON
+    """
+    now = datetime.now()
+    data = {
+        "current_date": now.strftime("%d-%m-%Y") ,
+         "current_time": now.strftime("%H:%M:%S")
+    }
+    return JsonResponse(data)
+
 
 def process_ewaybill_pdf_sync(pdf_file_path):
     """
