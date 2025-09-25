@@ -192,6 +192,18 @@ def calculate_price(cleaned_dict):
 
 def final_cleanup(cleaned_dict):
     """Final data cleanup"""
+    igst_raw = cleaned_dict.pop("IGST Amt CE", None)
+    if igst_raw:
+        if isinstance(igst_raw, list):
+            igst_raw = igst_raw[0]
+        parts = igst_raw.split()
+        cleaned_dict["IGST Amt"] = [parts[0].strip()] if len(parts) > 0 else ["0.00"]
+        cleaned_dict["CESS Amt"] = [parts[1].strip()] if len(parts) > 1 else ["0.00"]
+
+    # Optional: remove old SS Amt key if not needed
+    if "SS Amt" in cleaned_dict:
+        cleaned_dict.pop("SS Amt")
+        
     for key in ["From", "To"]:
         if key in cleaned_dict:
             val = cleaned_dict[key]
