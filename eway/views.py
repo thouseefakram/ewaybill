@@ -20,7 +20,7 @@ def current_date_api(request):
     now = datetime.now()
     data = {
         "current_date": now.strftime("%d-%m-%Y") ,
-         "current_time": now.strftime("%H:%M:%S")
+         "current_time": now.strftime("%I:%M:%S %p")
     }
     return JsonResponse(data)
 
