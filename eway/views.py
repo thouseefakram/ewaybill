@@ -146,6 +146,20 @@ def process_ewaybill_fields(cleaned_dict):
             else:
                 cleaned_dict["Transporter Doc No & Date"] = doc_details
 
+
+    if "Entered Date E" in cleaned_dict and "ntered By" in cleaned_dict:
+        raw_val = cleaned_dict.pop("Entered Date E")
+        broken_by = cleaned_dict.pop("ntered By")  # actual GSTIN is here sometimes
+
+        # Example: "16/09/2025 06:48 PM 3"
+        parts = raw_val.rsplit(" ", 1)
+        if len(parts) == 2:
+            cleaned_dict["Entered Date"] = parts[0].strip()
+            cleaned_dict["Entered By"] = broken_by.strip() if broken_by else parts[1].strip()
+        else:
+            cleaned_dict["Entered Date"] = raw_val.strip()
+            cleaned_dict["Entered By"] = broken_by.strip() if broken_by else None
+
 def calculate_price(cleaned_dict):
     """Calculate price from quantity and taxable amount"""
     try:
