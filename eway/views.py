@@ -11,16 +11,20 @@ from .serializers import EWayBillUploadSerializer, EWayBillDataSerializer
 from django.shortcuts import render
 from datetime import datetime
 from django.http import JsonResponse
+from django.utils import timezone
+import pytz
 
 
 def current_date_api(request):
     """
-    Backend-only endpoint to return current date and time in JSON
+    Backend-only endpoint to return current date and time in JSON (Tamil Nadu, IST)
     """
-    now = datetime.now()
+    ist = pytz.timezone("Asia/Kolkata")  
+    now = timezone.now().astimezone(ist)
+
     data = {
-        "current_date": now.strftime("%d-%m-%Y") ,
-         "current_time": now.strftime("%I:%M:%S %p")
+        "current_date": now.strftime("%d-%m-%Y"),
+        "current_time": now.strftime("%I:%M:%S %p")
     }
     return JsonResponse(data)
 
