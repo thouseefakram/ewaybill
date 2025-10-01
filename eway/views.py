@@ -7,7 +7,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import EWayBill
-from .serializers import EWayBillUploadSerializer, EWayBillDataSerializer
+from .serializers import EWayBillUploadSerializer, EWayBillDataSerializer, MultipleEWayBillUploadSerializer
 from django.shortcuts import render
 from datetime import datetime
 from django.http import JsonResponse
@@ -299,3 +299,49 @@ def get_ewaybill_data(request, pk=None):
         ewaybills = EWayBill.objects.all().order_by('-uploaded_at')
         serializer = EWayBillDataSerializer(ewaybills, many=True)
         return Response(serializer.data)
+    
+
+
+@api_view(['POST'])
+def upload_multiple_ewaybills(request):
+    """
+    Endpoint: Upload multiple PDFs at once
+    """
+    serializer = MultipleEWayBillUploadSerializer(data=request.data)
+    
+    if serializer.is_valid():
+        pdf_files = serializer.validated_data['pdf_files']
+        responses = []
+        
+        for pdf_file in pdf_files:
+            # Save each PDF as a new EWayBill entry
+            ewaybill = EWayBill.objects.create(pdf_file=pdf_file)
+            
+            try:
+                extracted_data = process_ewaybill_pdf_sync(ewaybill.pdf_file.path)
+                if extracted_data:
+                    ewaybill.extracted_data = extracted_data
+                    ewaybill.status = 'completed'
+                else:
+                    ewaybill.status = 'failed'
+                
+                ewaybill.save()
+                
+                responses.append({
+                    'id': ewaybill.id,
+                    'status': ewaybill.status,
+                    'extracted_data': ewaybill.extracted_data,
+                    'message': 'Processed successfully' if ewaybill.status == 'completed' else 'Processing failed'
+                })
+            except Exception as e:
+                ewaybill.status = 'failed'
+                ewaybill.save()
+                responses.append({
+                    'id': ewaybill.id,
+                    'status': 'failed',
+                    'message': f'Error: {str(e)}'
+                })
+        
+        return Response(responses, status=status.HTTP_201_CREATED)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

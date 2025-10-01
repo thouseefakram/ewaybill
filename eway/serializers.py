@@ -30,3 +30,31 @@ class EWayBillUploadResponseSerializer(serializers.Serializer):
     status = serializers.CharField()
     extracted_data = serializers.JSONField()
     message = serializers.CharField()
+
+
+class MultipleEWayBillUploadSerializer(serializers.Serializer):
+    pdf_files = serializers.ListField(
+        child=serializers.FileField(
+            max_length=100000, 
+            allow_empty_file=False, 
+            use_url=False
+        ),
+        allow_empty=False,
+        write_only=True
+    )
+
+    def validate_pdf_files(self, value):
+        # Limit to 10 files
+        if len(value) > 10:
+            raise serializers.ValidationError("You can upload a maximum of 10 PDFs at a time.")
+        
+        # Validate extensions & size (like single upload serializer)
+        for file in value:
+            ext = os.path.splitext(file.name)[1].lower()
+            if ext != ".pdf":
+                raise serializers.ValidationError(f"{file.name} is not a PDF.")
+            if file.size > 10 * 1024 * 1024:  # 10MB
+                raise serializers.ValidationError(f"{file.name} exceeds the 10MB size limit.")
+        
+        return value
+
